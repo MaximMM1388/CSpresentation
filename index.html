@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cybsec Quiz</title>
+    <title>Cybsec Quiz | Maxim Mlynek</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
     <style>
@@ -12,63 +12,73 @@
         body { background: var(--p); color: white; height: 100vh; overflow: hidden; }
         .view { display: none; height: 100%; width: 100%; flex-direction: column; align-items: center; justify-content: center; position: absolute; padding: 20px; text-align: center; }
         
-        /* Buttons & Inputs */
-        input { padding: 15px; border-radius: 5px; border: none; font-size: 1.2rem; margin: 10px; width: 80%; max-width: 300px; }
+        input { padding: 15px; border-radius: 5px; border: none; font-size: 1.2rem; margin: 10px; width: 80%; max-width: 300px; text-align: center; }
         .btn { padding: 15px 30px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1.1rem; color: white; box-shadow: inset 0 -4px rgba(0,0,0,0.2); }
         
-        /* Quiz Styles */
         #view-quiz { background: #f2f2f2; color: #333; }
-        .q-card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; width: 100%; max-width: 600px; font-size: 1.3rem; box-shadow: 0 4px #ccc; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 600px; }
+        .q-card { background: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; width: 100%; max-width: 600px; font-size: 1.4rem; font-weight: 700; box-shadow: 0 6px #ddd; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 600px; }
         
-        /* Scare Styles */
-        .data-box { background: #111; color: #0f0; border: 1px solid #0f0; padding: 10px; margin: 5px; width: 90%; max-width: 450px; display: none; font-family: monospace; text-align: left; font-size: 0.9rem; }
-
-        /* Teacher Panel */
-        #teacher-ui { position: fixed; inset: 0; background: white; color: black; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .t-btn { width: 250px; padding: 12px; margin: 5px; border: 2px solid #333; font-weight: bold; cursor: pointer; }
+        /* Podium & Leaderboard */
+        .leaderboard-list { list-style: none; width: 100%; max-width: 400px; text-align: left; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; }
+        .leaderboard-list li { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+        
+        #teacher-ui { position: fixed; inset: 0; background: white; color: black; z-index: 9999; display: none; flex-direction: column; align-items: center; overflow-y: auto; padding: 20px; }
+        .t-btn { width: 280px; padding: 12px; margin: 5px; border: 2px solid #333; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        
+        .data-box { background: #111; color: #0f0; border: 1px solid #0f0; padding: 10px; margin: 5px; width: 90%; max-width: 450px; display: none; font-family: monospace; text-align: left; }
     </style>
 </head>
 <body>
 
     <div id="teacher-ui">
-        <h2 style="color:var(--p)">Quiz Controller</h2>
-        <button class="t-btn" onclick="send('START')">START QUIZ</button>
-        <button class="t-btn" onclick="send('PROCESS')">PAUSE / PROCESSING</button>
-        <hr style="width:200px; margin:10px">
+        <h2 style="color:var(--p)">Maxim's Admin Panel</h2>
+        <div style="margin: 10px 0;">
+            <button class="t-btn" style="background:var(--p); color:white" onclick="send('START1')">▶ START PART 1 (Basics)</button>
+            <button class="t-btn" onclick="send('LOBBY')">⏸ PAUSE / LOBBY</button>
+            <button class="t-btn" style="background:var(--p); color:white" onclick="send('START2')">▶ START PART 2 (Social Eng)</button>
+        </div>
+        <hr style="width:100%; margin:10px">
+        <div style="display:flex; gap:10px">
+            <button class="t-btn" style="width:135px; background:var(--b); color:white" onclick="send('LEAD1')">MID LEADERBOARD</button>
+            <button class="t-btn" style="width:135px; background:var(--g); color:white" onclick="send('PODIUM')">🏆 FINAL PODIUM</button>
+        </div>
+        <hr style="width:100%; margin:10px">
         <button class="t-btn" style="background:var(--r); color:white" onclick="send('S1')">REVEAL IP</button>
         <button class="t-btn" style="background:var(--r); color:white" onclick="send('S2')">REVEAL LOCATION</button>
-        <button class="t-btn" style="background:var(--r); color:white" onclick="send('S3')">REVEAL DEVICE</button>
+        <button class="t-btn" style="background:var(--r); color:white" onclick="send('S3')">REVEAL ISP</button>
         <button class="t-btn" style="background:var(--r); color:white" onclick="send('S4')">REVEAL SYSTEM</button>
-        <hr style="width:200px; margin:10px">
-        <button class="t-btn" onclick="send('END')">SHOW FINAL SCORE</button>
+        <hr style="width:100%; margin:10px">
+        <button class="t-btn" onclick="send('END')">THANKS & RATE</button>
+
+        <h3 style="margin-top:20px">Live Player Scores:</h3>
+        <ul id="t-scores" style="text-align:left; width: 280px;"></ul>
     </div>
 
     <div id="view-entry" class="view" style="display:flex">
         <h1>Kahoot!</h1>
-        <input type="text" id="nick" placeholder="Enter Nickname">
+        <input type="text" id="nick" placeholder="Nickname">
         <button class="btn" style="background:var(--g)" onclick="join()">JOIN</button>
     </div>
 
     <div id="view-lobby" class="view">
         <h1>Welcome, <span id="p-name"></span>!</h1>
-        <p>Wait for the teacher to start...</p>
+        <p>Waiting for Maxim to continue...</p>
     </div>
 
     <div id="view-quiz" class="view">
-        <div style="margin-bottom:10px">Question <span id="q-num">1</span>/20</div>
-        <div class="q-card" id="q-txt"></div>
-        <div class="grid" id="ans"></div>
-        <div style="margin-top:20px">Score: <span id="score">0</span></div>
+        <div id="q-txt" class="q-card"></div>
+        <div id="ans" class="grid"></div>
+        <div style="margin-top:20px; font-weight:900">Score: <span id="score">0</span></div>
     </div>
 
-    <div id="view-process" class="view" style="background:var(--b)">
-        <h1>ANALYZING DATA...</h1>
-        <p>Please wait for results.</p>
+    <div id="view-leaderboard" class="view" style="background:var(--b)">
+        <h1>LEADERBOARD</h1>
+        <ul id="l-list" class="leaderboard-list"></ul>
     </div>
 
     <div id="view-scare" class="view" style="background:black; color:red">
-        <h1 style="margin-bottom:20px">VULNERABILITY FOUND</h1>
+        <h1>⚠️ SYSTEM COMPROMISED ⚠️</h1>
         <div id="d1" class="data-box"></div>
         <div id="d2" class="data-box"></div>
         <div id="d3" class="data-box"></div>
@@ -76,46 +86,56 @@
     </div>
 
     <div id="view-end" class="view" style="background:var(--g)">
-        <h1>FINISHED</h1>
-        <h2 id="final"></h2>
+        <h1>Thanks for your attention!</h1>
+        <div style="margin-top:20px">
+            <p>Rate Maxim's presentation:</p>
+            <div id="rating">
+                <script>for(let i=1;i<=10;i++) document.write(`<button class="btn" style="padding:10px; margin:2px; width:40px" onclick="this.parentElement.innerHTML='<h1>🤩</h1>'">${i}</button>`)</script>
+            </div>
+        </div>
     </div>
 
     <script>
-        // REPLACE WITH YOUR KEY
-        const ably = new Ably.Realtime('whyK0Q.-8H0rA:_SQSQ2DWPa-nW0h3XbnGBT-yyOE4QrIt6uVLDu-aoEM'); 
-        const chan = ably.channels.get('quiz');
+        const ably = new Ably.Realtime('PASTE_YOUR_KEY_HERE'); 
+        const chan = ably.channels.get('quiz-v3');
         const isTeacher = new URLSearchParams(window.location.search).has('teacher');
         
-        let pts = 0, qIdx = 0, name = "", info = {};
+        let pts = 0, name = "", info = {}, players = {};
 
-        const questions = [
-            { q: "What is Cybersecurity?", a: ["Protecting systems", "Coding", "Gaming", "WiFi"], c: 0 },
-            { q: "A Pen Test is a...", a: ["Repair", "Security Exercise", "Game", "Law"], c: 1 },
-            { q: "Stage 1 of Pen Testing?", a: ["Scanning", "Recon", "Access", "Maintenance"], c: 1 },
-            { q: "Stage 2 of Pen Testing?", a: ["Recon", "Scanning", "Access", "Maintenance"], c: 1 },
-            { q: "Stage 3 of Pen Testing?", a: ["Scanning", "Access", "Maintenance", "Recon"], c: 1 },
-            { q: "Stage 4 of Pen Testing?", a: ["Recon", "Scanning", "Maintenance", "Access"], c: 2 },
-            { q: "Ethical hackers are...", a: ["Black Hat", "Gray Hat", "White Hat", "No Hat"], c: 2 },
-            { q: "Unethical hackers are...", a: ["White Hat", "Black Hat", "Blue Hat", "Green Hat"], c: 1 },
-            { q: "The 'Weakest Link' is...", a: ["Hardware", "Software", "People", "Internet"], c: 2 },
-            { q: "Recon stands for...", a: ["Recording", "Reconnaissance", "Recovery", "Reading"], c: 1 },
-            { q: "Scanning is done...", a: ["First", "After Recon", "At the end", "Never"], c: 1 },
-            { q: "Social Engineering uses...", a: ["Only code", "Psychology", "Brute force", "Nothing"], c: 1 },
-            { q: "Phishing involves...", a: ["Fake emails", "Fishing", "Passwords", "Hardware"], c: 0 },
-            { q: "Where to save passwords?", a: ["Sticky note", "Password Manager", "Text file", "Desktop"], c: 1 },
-            { q: "What is 2FA?", a: ["2 Factor Auth", "2 File Access", "Fast Apps", "None"], c: 0 },
-            { q: "Is 'Password123' safe?", a: ["Yes", "No", "Maybe", "Sometimes"], c: 1 },
-            { q: "White hats find...", a: ["Money", "Vulnerabilities", "Games", "Pictures"], c: 1 },
-            { q: "Black hats...", a: ["Protect", "Fix", "Steal/Destroy", "Teach"], c: 2 },
-            { q: "Gray hats are...", a: ["Ethical", "Unethical", "In between", "Bots"], c: 2 },
-            { q: "Cybersecurity protects...", a: ["Networks", "Data", "Devices", "All of these"], c: 3 }
+        const group1 = [
+            { q: "What is the first stage of Pen Testing?", a: ["Scanning", "Recon", "Access", "Cleanup"], c: 1 },
+            { q: "What does 'Recon' stand for?", a: ["Recognition", "Reconnaissance", "Record", "Recovery"], c: 1 },
+            { q: "Which stage involves active interaction (like port scanning)?", a: ["Recon", "Scanning", "Access", "Maintenance"], c: 1 },
+            { q: "True or False: Pen testing is illegal if you have permission.", a: ["True", "False"], c: 1 },
+            { q: "Why do hackers want to 'Maintain Access'?", a: ["To get faster WiFi", "To keep control of the system", "To delete files", "To help the user"], c: 1 },
+            { q: "Who usually hires Pen Testers?", a: ["Criminals", "Companies/Governments", "Script Kiddies", "Nobody"], c: 1 },
+            { q: "What color 'hat' does an ethical hacker wear?", a: ["Black", "Gray", "White", "Red"], c: 2 },
+            { q: "Who follows a 'Code of Ethics'?", a: ["Black Hat", "White Hat", "Gray Hat", "Everyone"], c: 1 },
+            { q: "What does 2FA stand for?", a: ["2 Factor Auth", "2 File Access", "Fast Apps", "None"], c: 0 },
+            { q: "Is Pen Testing a one-time thing or a regular process?", a: ["One-time", "Regular Process"], c: 1 },
+            { q: "Can a Gray Hat be sued?", a: ["No", "Yes", "Only if they win", "Maybe"], c: 1 }
         ];
+
+        const group2 = [
+            { q: "What is 'Phishing'?", a: ["Fake emails", "Fishing", "Passwords", "Hardware"], c: 0 },
+            { q: "What is 'Baiting'?", a: ["Scaring users", "Luring with a reward", "Coding", "WiFi hacking"], c: 1 },
+            { q: "True or False: Tech can stop 100% of social engineering.", a: ["True", "False"], c: 1 },
+            { q: "What is 'Dumpster Diving'?", a: ["Searching trash for info", "Swimming", "Deleting files", "Broken PC"], c: 0 },
+            { q: "How does an attacker gain 'Trust'?", a: ["Using a virus", "Perceived leadership/Authority", "Stealing", "Fast typing"], c: 1 },
+            { q: "Is a 'fake IT expert' a social engineering tactic?", a: ["Yes", "No"], c: 0 },
+            { q: "What does 2FA stand for?", a: ["2 Factor Auth", "2 File Access", "Fast Apps", "None"], c: 0 },
+            { q: "What is a 'DDoS' attack?", a: ["Deleting Data", "Overwhelming a server", "Direct Drive", "None"], c: 1 },
+            { q: "Who is the most important person in cybersecurity?", a: ["Bill Gates", "Hackers", "The User (You)", "IT Guys"], c: 2 },
+            { q: "What is a 'VPN'?", a: ["Virtual Private Network", "Very Public Network", "Virus", "None"], c: 0 }
+        ];
+
+        
 
         if(isTeacher) {
             document.getElementById('teacher-ui').style.display = 'flex';
         } else {
             fetch('https://ipapi.co/json/').then(r=>r.json()).then(d => {
-                info = { s1: "IP: "+d.ip, s2: "LOC: "+d.city+", "+d.country_name, s3: "ISP: "+d.org, s4: "SYS: "+navigator.platform+" | "+navigator.language };
+                info = { s1: "IP: "+d.ip, s2: "LOC: "+d.city+", "+d.country_name, s3: "ISP: "+d.org, s4: "SYS: "+navigator.platform };
             });
         }
 
@@ -123,16 +143,28 @@
             name = document.getElementById('nick').value;
             if(!name) return;
             document.getElementById('p-name').innerText = name;
+            chan.publish('join', {name: name});
             show('view-lobby');
         }
 
         function send(cmd) { chan.publish('m', cmd); }
 
-        chan.subscribe('m', (m) => {
+        chan.subscribe('join', m => { if(isTeacher) players[m.data.name] = 0; });
+        chan.subscribe('score', m => { 
+            players[m.data.name] = m.data.score;
+            if(isTeacher) updateTeacherList();
+        });
+
+        chan.subscribe('m', m => {
             const t = m.data;
-            if(t === 'START') { show('view-quiz'); load(); }
-            else if(t === 'PROCESS') show('view-process');
-            else if(t === 'END') { show('view-end'); document.getElementById('final').innerText = name+": "+pts+" pts"; }
+            if(t === 'START1') { show('view-quiz'); loadQ(group1); }
+            else if(t === 'START2') { show('view-quiz'); loadQ(group2); }
+            else if(t === 'LOBBY') show('view-lobby');
+            else if(t === 'LEAD1' || t === 'PODIUM') {
+                show('view-leaderboard');
+                renderLeaderboard();
+            }
+            else if(t === 'END') show('view-end');
             else if(t.startsWith('S')) {
                 show('view-scare');
                 const id = "d" + t.charAt(1);
@@ -143,24 +175,44 @@
             }
         });
 
-        function load() {
-            const q = questions[qIdx];
-            document.getElementById('q-num').innerText = qIdx + 1;
-            document.getElementById('q-txt').innerText = q.q;
-            const area = document.getElementById('ans');
-            area.innerHTML = '';
-            const clrs = ['var(--r)','var(--b)','var(--y)','var(--g)'];
-            q.a.forEach((txt, i) => {
-                const b = document.createElement('button');
-                b.className = 'btn'; b.style.background = clrs[i]; b.innerText = txt;
-                b.onclick = () => {
-                    if(i === q.c) pts += 100;
-                    document.getElementById('score').innerText = pts;
-                    qIdx++;
-                    if(qIdx < questions.length) load();
-                    else document.getElementById('q-txt').innerText = "Waiting for Host...";
-                };
-                area.appendChild(b);
+        function loadQ(arr) {
+            let idx = 0;
+            const next = () => {
+                const q = arr[idx];
+                document.getElementById('q-txt').innerText = q.q;
+                const area = document.getElementById('ans');
+                area.innerHTML = '';
+                q.a.forEach((txt, i) => {
+                    const b = document.createElement('button');
+                    b.className = 'btn'; b.style.background = ['var(--r)','var(--b)','var(--y)','var(--g)'][i%4];
+                    b.innerText = txt;
+                    b.onclick = () => {
+                        if(i === q.c) pts += 100;
+                        document.getElementById('score').innerText = pts;
+                        chan.publish('score', {name: name, score: pts});
+                        idx++;
+                        if(idx < arr.length) next();
+                        else document.getElementById('q-txt').innerText = "Wait for Maxim...";
+                    };
+                    area.appendChild(b);
+                });
+            };
+            next();
+        }
+
+        function renderLeaderboard() {
+            const list = document.getElementById('l-list');
+            list.innerHTML = '';
+            Object.entries(players).sort((a,b)=>b[1]-a[1]).forEach(([n, s]) => {
+                list.innerHTML += `<li><span>${n}</span><span>${s} pts</span></li>`;
+            });
+        }
+
+        function updateTeacherList() {
+            const list = document.getElementById('t-scores');
+            list.innerHTML = '';
+            Object.entries(players).sort((a,b)=>b[1]-a[1]).forEach(([n, s]) => {
+                list.innerHTML += `<li>${n}: ${s}</li>`;
             });
         }
 
