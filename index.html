@@ -26,7 +26,7 @@
 <body>
 
     <div id="teacher-ui">
-        <h2 style="color:var(--p)">Maxim's Admin Panel</h2>
+        <h2 style="color:var(--p)"> Admin Panel</h2>
         <div style="margin: 10px 0;">
             <button class="t-btn" style="background:var(--p); color:white" onclick="send('START1')">▶ START PART 1 (Basics)</button>
             <button class="t-btn" onclick="send('LOBBY')">⏸ PAUSE / LOBBY</button>
@@ -57,7 +57,7 @@
 
     <div id="view-lobby" class="view">
         <h1>Welcome, <span id="p-name"></span>!</h1>
-        <p>Waiting for Maxim to continue...</p>
+        <p>Waiting to continue...</p>
     </div>
 
     <div id="view-quiz" class="view">
@@ -72,7 +72,7 @@
     </div>
 
     <div id="view-scare" class="view" style="background:black; color:red">
-        <h1>⚠️ SYSTEM COMPROMISED ⚠️</h1>
+        <h1>⚠️ ⚠️</h1>
         <div id="d1" class="data-box"></div>
         <div id="d2" class="data-box"></div>
         <div id="d3" class="data-box"></div>
@@ -82,7 +82,7 @@
     <div id="view-end" class="view" style="background:var(--g)">
         <h1>Thanks for your attention!</h1>
         <div style="margin-top:20px">
-            <p>Rate Maxim's presentation:</p>
+            <p>Rate the presentation:</p>
             <div id="rating">
                 <script>for(let i=1;i<=10;i++) document.write(`<button class="btn" style="padding:10px; margin:2px; width:40px" onclick="this.parentElement.innerHTML='<h1>🤩</h1>'">${i}</button>`)</script>
             </div>
@@ -176,7 +176,7 @@
             let idx = 0;
             const next = () => {
                 if(idx >= arr.length) {
-                    document.getElementById('q-txt').innerText = "Wait for Maxim...";
+                    document.getElementById('q-txt').innerText = "Wait ...";
                     document.getElementById('ans').innerHTML = '';
                     return;
                 }
@@ -224,3 +224,4 @@
     </script>
 </body>
 </html>
+
