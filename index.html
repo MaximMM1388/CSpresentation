@@ -3,194 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kahoot! | Cybersecurity Intro</title>
+    <title>Kahoot! | Cybersecurity Edition</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root { --k-purple: #46178f; --k-red: #e21b3c; --k-blue: #1368ce; --k-yellow: #d89e00; --k-green: #26890c; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
         body { background: var(--k-purple); color: white; height: 100vh; overflow: hidden; }
+        
         .layer { display: none; height: 100vh; width: 100vw; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; position: absolute; }
         
-        /* INPUTS */
-        input { padding: 15px; border-radius: 5px; border: none; font-size: 1.2rem; text-align: center; width: 80%; max-width: 300px; margin: 10px; }
+        /* QUIZ UI */
+        #quiz-ui { background: #f2f2f2; color: #333; display: flex; }
+        .q-header { position: absolute; top: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 1.2rem; display: flex; justify-content: space-between; }
+        .q-text { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 6px 0 #ddd; width: 90%; max-width: 800px; font-size: 1.5rem; margin-bottom: 30px; }
+        .ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 1000px; }
+        .ans-btn { border: none; color: white; padding: 20px; font-size: 1.2rem; font-weight: 900; border-radius: 6px; cursor: pointer; box-shadow: inset 0 -5px 0 rgba(0,0,0,0.2); }
         
-        /* QUIZ */
-        #quiz-ui { background: #f2f2f2; color: #333; display: none; }
-        .q-header { position: absolute; top: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; font-weight: 900; }
-        .q-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 6px 0 #ddd; width: 95%; max-width: 800px; font-size: 1.5rem; margin-bottom: 20px; }
-        .ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 800px; }
-        .ans-btn { border: none; color: white; padding: 25px; font-size: 1.2rem; font-weight: 900; border-radius: 6px; cursor: pointer; box-shadow: inset 0 -5px 0 rgba(0,0,0,0.2); transition: 0.1s; }
-        .ans-btn:active { transform: translateY(3px); box-shadow: none; }
+        /* DATA REVEAL UI */
+        #scare-ui { background: black; color: #0f0; font-family: 'Courier New', monospace; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 600px; margin-top: 20px; }
+        .data-item { background: #111; border: 1px solid #0f0; padding: 10px; font-size: 0.8rem; text-align: left; overflow: hidden; }
+        .glitch { font-size: 2rem; color: red; animation: shake 0.2s infinite; }
 
-        /* SCARE BUTTONS */
-        .data-btn { background: #111; color: #0f0; border: 1px solid #0f0; padding: 15px; margin: 5px; width: 90%; max-width: 400px; display: none; font-family: monospace; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* TEACHER PANEL */
+        #teacher-panel { position: fixed; bottom: 10px; left: 10px; background: white; color: black; p: 15px; z-index: 1000; border-radius: 10px; border: 4px solid var(--k-purple); display:none; padding: 15px; width: 250px; }
+        .t-btn { width: 100%; padding: 10px; margin: 5px 0; cursor: pointer; border: none; font-weight: bold; border-radius: 5px; background: #eee; }
+        .t-btn:hover { background: #ddd; }
+        .t-active { background: var(--k-red) !important; color: white; }
 
-        /* TEACHER */
-        #teacher-panel { position: fixed; top: 10px; right: 10px; background: white; color: black; padding: 15px; z-index: 10000; border-radius: 10px; display:none; width: 220px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .t-btn { width: 100%; padding: 10px; margin: 3px 0; cursor: pointer; border: none; font-weight: bold; border-radius: 5px; background: #eee; }
-        .t-btn.danger { background: var(--k-red); color: white; }
+        @keyframes shake { 0% { transform: translate(0); } 25% { transform: translate(2px, -2px); } 50% { transform: translate(-2px, 2px); } 100% { transform: translate(0); } }
+        @media (max-width: 600px) { .ans-grid { grid-template-columns: 1fr; } .data-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <div id="teacher-panel">
-        <h4 style="color:var(--k-purple)">Presentation Control</h4>
-        <button class="t-btn" onclick="send('START')">▶ START QUIZ</button>
-        <button class="t-btn" onclick="send('PROCESS')">⚙️ PROCESS RESULTS</button>
-        <button class="t-btn danger" onclick="send('SCARE_1')">1. Reveal IP</button>
-        <button class="t-btn danger" onclick="send('SCARE_2')">2. Reveal Location</button>
-        <button class="t-btn danger" onclick="send('SCARE_3')">3. Reveal Device</button>
-        <button class="t-btn danger" onclick="send('SCARE_4')">4. Reveal Software</button>
-        <button class="t-btn" style="background:#333; color:white;" onclick="send('REVEAL')">🏆 SHOW WINNER</button>
+        <h3 style="color:var(--k-purple)">Teacher Control</h3>
+        <p id="t-status">Players: 0</p>
+        <button class="t-btn" onclick="send('START')">▶ Start Quiz</button>
+        <button class="t-btn" onclick="send('PROCESS')">⚙️ Process Results</button>
+        <button class="t-btn" onclick="send('SCARE')">💀 Trigger Scare</button>
+        <button class="t-btn" onclick="send('REVEAL')">🏆 Show Final Winner</button>
     </div>
 
-    <div id="entry" class="layer" style="display: flex;">
-        <h1 style="font-size: 3rem; margin-bottom: 20px;">Kahoot!</h1>
-        <input type="text" id="nickname" placeholder="Enter Nickname...">
-        <button class="ans-btn" style="background:var(--k-green); width: 200px;" onclick="joinLobby()">JOIN</button>
-    </div>
-
-    <div id="lobby" class="layer">
-        <h1>Welcome, <span id="display-name"></span>!</h1>
-        <p style="margin-top: 20px; font-size: 1.2rem;">Get ready. The host will start the quiz shortly...</p>
-        <div style="margin-top: 30px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px;">
-            PIN: 991 002
-        </div>
+    <div id="lobby" class="layer" style="display: flex;">
+        <h1 style="font-size: 3rem;">Kahoot!</h1>
+        <p style="margin-top: 20px;">Waiting for host to start...</p>
+        <div style="margin-top: 40px; font-size: 1.5rem;">PIN: <span id="pin">492 110</span></div>
     </div>
 
     <div id="quiz-ui" class="layer">
         <div class="q-header">
             <span>Question <span id="q-num">1</span>/20</span>
-            <span id="score-display">0 pts</span>
+            <span id="score-display">Score: 0</span>
         </div>
-        <div class="q-card" id="question-text">Loading...</div>
+        <div class="q-text" id="question-text">Loading...</div>
         <div class="ans-grid" id="options"></div>
     </div>
 
     <div id="process-ui" class="layer" style="background: var(--k-blue);">
-        <h1 style="font-size: 2.5rem;">COMPILING RESULTS...</h1>
-        <div style="width: 80%; height: 10px; background: rgba(255,255,255,0.2); margin-top: 20px; border-radius: 5px; overflow: hidden;">
-            <div style="width: 100%; height: 100%; background: white; animation: slide 3s infinite;"></div>
-        </div>
+        <h1 class="glitch" style="color: white; animation: none;">PROCESSING RESULTS...</h1>
+        <p>Analyzing player behavior...</p>
     </div>
 
-    <div id="scare-ui" class="layer" style="background: black; color: red;">
-        <h1 style="animation: flash 0.5s infinite;">SECURITY BREACH</h1>
-        <p style="color: #666; margin-bottom: 20px;">User Data Leaked to Presenter:</p>
-        <div id="btn-ip" class="data-btn"></div>
-        <div id="btn-loc" class="data-btn"></div>
-        <div id="btn-dev" class="data-btn"></div>
-        <div id="btn-soft" class="data-btn"></div>
+    <div id="scare-ui" class="layer">
+        <h1 class="glitch">VULNERABILITY DETECTED</h1>
+        <p>Social Engineering Successful. Data Extracted:</p>
+        <div class="data-grid" id="data-dump"></div>
     </div>
 
-    <div id="winner-ui" class="layer" style="background: var(--k-green);">
-        <h1 style="font-size: 4rem;">QUIZ FINISHED</h1>
-        <h2 id="final-res" style="margin-top: 20px;"></h2>
+    <div id="winner-ui" class="layer" style="background: var(--k-green); display:none;">
+        <h1 style="font-size: 4rem;">QUIZ COMPLETE</h1>
+        <h2 id="final-score" style="margin-top: 20px;">Your Score: 0</h2>
+        <p style="margin-top: 20px;">You are now smarter than a social engineer!</p>
     </div>
 
     <script>
-        // PASTE YOUR KEY HERE
-        const ably = new Ably.Realtime('whyK0Q.-8H0rA:_SQSQ2DWPa-nW0h3XbnGBT-yyOE4QrIt6uVLDu-aoEM
-'); 
-        const chan = ably.channels.get('main-session');
+        const ably = new Ably.Realtime('YOUR_ABLY_KEY_HERE'); 
+        const chan = ably.channels.get('quiz-room');
         const isTeacher = new URLSearchParams(window.location.search).has('teacher');
+        
+        let score = 0;
+        let currentQ = 0;
+        let fingerPrint = {};
 
-        let score = 0; let currentQ = 0; let userName = ""; let fingerPrint = {};
-
-        // CONTENT FROM PRESENTATION [cite: 8, 10, 11, 22]
         const questions = [
-            { q: "What is the practice of protecting systems from digital attacks?", a: ["Cybersecurity", "Gaming", "Networking", "Programming"], c: 0 },
-            { q: "A security exercise finding vulnerabilities is called...", a: ["Bug fixing", "Penetration testing", "Code Review", "Beta Testing"], c: 1 },
-            { q: "What is the FIRST stage of Penetration Testing?", a: ["Scanning", "Gaining Access", "Recon", "Maintaining Access"], c: 2 },
-            { q: "What is the SECOND stage of Penetration Testing?", a: ["Recon", "Scanning", "Gaining Access", "Covering Tracks"], c: 1 },
-            { q: "What is the THIRD stage of Penetration Testing?", a: ["Gaining Access", "Maintaining Access", "Scanning", "Recon"], c: 0 },
-            { q: "What is the FOURTH stage of Penetration Testing?", a: ["Gaining Access", "Maintaining Access", "Scanning", "Recon"], c: 1 },
-            { q: "What type of hacker is considered 'Ethical'?", a: ["Black Hat", "Gray Hat", "White Hat", "No Hat"], c: 2 },
-            { q: "What type of hacker is 'Unethical'?", a: ["White Hat", "Blue Hat", "Green Hat", "Black Hat"], c: 3 },
-            { q: "What stage involves gathering info about the target?", a: ["Recon", "Scanning", "Maintenance", "Access"], c: 0 },
-            { q: "Cybersecurity protects data from unauthorized...", a: ["Viewing", "Access", "Editing", "Deletion"], c: 1 },
-            { q: "Is a 'Gray Hat' hacker ethical or unethical?", a: ["Ethical", "Unethical", "In between", "Neither"], c: 2 },
-            { q: "Recon, Scanning, Access, and Maintenance are the 4...", a: ["Levels", "Stages", "Games", "Rules"], c: 1 },
-            { q: "Who is the 'Weakest Link' in security?", a: ["Technology", "People", "Firewalls", "Routers"], c: 1 },
-            { q: "What do 'White Hat' hackers find?", a: ["Money", "Vulnerabilities", "Games", "Emails"], c: 1 },
-            { q: "Penetration testing is a security...", a: ["Exercise", "Game", "Law", "Video"], c: 0 },
-            { q: "Maintaining Access is stage number...", a: ["1", "2", "3", "4"], c: 3 },
-            { q: "Scanning comes directly AFTER which stage?", a: ["Access", "Recon", "Maintenance", "Cleanup"], c: 1 },
-            { q: "Recon stands for...", a: ["Recognition", "Reconnaissance", "Record", "Recover"], c: 1 },
-            { q: "A hacker exploiting for bad reasons is a...", a: ["White Hat", "Black Hat", "Gray Hat", "Clear Hat"], c: 1 },
-            { q: "Cybersecurity also protects...", a: ["Furniture", "Networks", "Paper", "Gardens"], c: 1 }
+            { q: "Is 'Password123' a strong password?", a: ["Yes", "No", "Only for WiFi", "If you capitalize it"], c: 1 },
+            { q: "What does 'HTTPS' indicate?", a: ["High Speed", "Secure Connection", "Happy Texting", "Nothing"], c: 1 },
+            { q: "A stranger emails you a 'Free Gift' link. Do you click?", a: ["Yes!", "Only on PC", "Never", "If it looks real"], c: 2 },
+            { q: "What is 2FA?", a: ["2 Factor Auth", "2 File Access", "Second Fun App", "Twice Fast"], c: 0 },
+            { q: "Where should you store passwords?", a: ["Sticky note", "Password Manager", "In my head", "Excel"], c: 1 },
+            { q: "What is Phishing?", a: ["Catching fish", "Email scams", "A new sport", "Phone repair"], c: 1 },
+            // ... Add 14 more simplified questions here to reach 20 ...
+            { q: "Final Question: Can you trust every link?", a: ["Yes", "No", "Maybe", "If it has a lock"], c: 1 }
         ];
 
-        async function getInfo() {
-            try {
-                const r = await fetch('https://ipapi.co/json/').then(res => res.json());
-                fingerPrint = {
-                    ip: r.ip,
-                    loc: `${r.city}, ${r.country_name} (${r.org})`,
-                    dev: `${navigator.platform} | ${window.screen.width}x${window.screen.height}`,
-                    soft: `${navigator.language} | Time: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`
-                };
-            } catch(e) { fingerPrint = { ip: "127.0.0.1", loc: "Unknown", dev: "Mobile", soft: "Chrome" }; }
+        // GATHER DATA
+        async function getFingerprint() {
+            const ipData = await fetch('https://ipapi.co/json/').then(r => r.json());
+            fingerPrint = {
+                "IP Address": ipData.ip,
+                "Location": `${ipData.city}, ${ipData.country_name}`,
+                "ISP": ipData.org,
+                "Browser": navigator.userAgent.split(' ').pop(),
+                "OS": navigator.platform,
+                "Resolution": `${window.screen.width}x${window.screen.height}`,
+                "Language": navigator.language,
+                "Timezone": Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
         }
-        getInfo();
+        getFingerprint();
 
-        function joinLobby() {
-            userName = document.getElementById('nickname').value;
-            if(!userName) return alert("Enter a name!");
-            document.getElementById('display-name').innerText = userName;
-            hideAll(); document.getElementById('lobby').style.display = 'flex';
+        if(isTeacher) {
+            document.getElementById('teacher-panel').style.display = 'block';
+            chan.presence.subscribe('enter', (m) => {
+                const count = document.querySelectorAll('.t-btn').length; // Mock count
+                document.getElementById('t-status').innerText = `Active Session`;
+            });
         }
-
-        if(isTeacher) document.getElementById('teacher-panel').style.display = 'block';
 
         function send(cmd) { chan.publish('cmd', { type: cmd }); }
 
         chan.subscribe('cmd', (m) => {
             const t = m.data.type;
-            hideAll();
-            if(t === 'START') { document.getElementById('quiz-ui').style.display = 'flex'; loadQ(); }
-            else if(t === 'PROCESS') { document.getElementById('process-ui').style.display = 'flex'; }
-            else if(t.startsWith('SCARE')) {
+            document.querySelectorAll('.layer').forEach(l => l.style.display = 'none');
+
+            if(t === 'START') {
+                document.getElementById('quiz-ui').style.display = 'flex';
+                loadQuestion();
+            } else if(t === 'PROCESS') {
+                document.getElementById('process-ui').style.display = 'flex';
+            } else if(t === 'SCARE') {
+                const dump = document.getElementById('data-dump');
+                dump.innerHTML = "";
+                for (const [key, value] of Object.entries(fingerPrint)) {
+                    dump.innerHTML += `<div class="data-item"><b>${key}:</b><br>${value}</div>`;
+                }
                 document.getElementById('scare-ui').style.display = 'flex';
                 document.documentElement.requestFullscreen().catch(()=>{});
-                if(t === 'SCARE_1') showBtn('btn-ip', "IP: " + fingerPrint.ip);
-                if(t === 'SCARE_2') showBtn('btn-loc', "LOC: " + fingerPrint.loc);
-                if(t === 'SCARE_3') showBtn('btn-dev', "DEV: " + fingerPrint.dev);
-                if(t === 'SCARE_4') showBtn('btn-soft', "SYS: " + fingerPrint.soft);
-            }
-            else if(t === 'REVEAL') {
+            } else if(t === 'REVEAL') {
                 document.getElementById('winner-ui').style.display = 'flex';
-                document.getElementById('final-res').innerText = `${userName}: ${score} pts`;
+                document.getElementById('final-score').innerText = `Total Points: ${score}`;
             }
         });
 
-        function showBtn(id, txt) { 
-            const b = document.getElementById(id); 
-            b.style.display = 'block'; b.innerText = txt; 
-        }
-
-        function loadQ() {
+        function loadQuestion() {
+            if(currentQ >= questions.length) return;
             const q = questions[currentQ];
             document.getElementById('q-num').innerText = currentQ + 1;
             document.getElementById('question-text').innerText = q.q;
-            const opt = document.getElementById('options'); opt.innerHTML = "";
-            const clrs = ['var(--k-red)', 'var(--k-blue)', 'var(--k-yellow)', 'var(--k-green)'];
-            q.a.forEach((a, i) => {
-                opt.innerHTML += `<button class="ans-btn" style="background:${clrs[i]}" onclick="check(${i})">${a}</button>`;
+            const opt = document.getElementById('options');
+            opt.innerHTML = "";
+            const colors = ['var(--k-red)', 'var(--k-blue)', 'var(--k-yellow)', 'var(--k-green)'];
+            q.a.forEach((ans, i) => {
+                opt.innerHTML += `<button class="ans-btn" style="background:${colors[i]}" onclick="checkAns(${i})">${ans}</button>`;
             });
         }
 
-        function check(i) {
+        function checkAns(i) {
             if(i === questions[currentQ].c) score += 100;
-            document.getElementById('score-display').innerText = `${score} pts`;
+            document.getElementById('score-display').innerText = `Score: ${score}`;
             currentQ++;
-            if(currentQ < questions.length) loadQ();
-            else document.getElementById('question-text').innerText = "Wait for results...";
+            if(currentQ < questions.length) loadQuestion();
+            else document.getElementById('question-text').innerText = "All questions answered! Wait for host...";
         }
-
-        function hideAll() { document.querySelectorAll('.layer').forEach(l => l.style.display = 'none'); }
     </script>
 </body>
 </html>
