@@ -11,21 +11,15 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
         body { background: var(--p); color: white; height: 100vh; overflow: hidden; }
         .view { display: none; height: 100%; width: 100%; flex-direction: column; align-items: center; justify-content: center; position: absolute; padding: 20px; text-align: center; }
-        
         input { padding: 15px; border-radius: 5px; border: none; font-size: 1.2rem; margin: 10px; width: 80%; max-width: 300px; text-align: center; }
         .btn { padding: 15px 30px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1.1rem; color: white; box-shadow: inset 0 -4px rgba(0,0,0,0.2); }
-        
         #view-quiz { background: #f2f2f2; color: #333; }
         .q-card { background: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; width: 100%; max-width: 600px; font-size: 1.4rem; font-weight: 700; box-shadow: 0 6px #ddd; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 600px; }
-        
-        /* Podium & Leaderboard */
         .leaderboard-list { list-style: none; width: 100%; max-width: 400px; text-align: left; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; }
         .leaderboard-list li { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
-        
         #teacher-ui { position: fixed; inset: 0; background: white; color: black; z-index: 9999; display: none; flex-direction: column; align-items: center; overflow-y: auto; padding: 20px; }
         .t-btn { width: 280px; padding: 12px; margin: 5px; border: 2px solid #333; font-weight: bold; cursor: pointer; border-radius: 5px; }
-        
         .data-box { background: #111; color: #0f0; border: 1px solid #0f0; padding: 10px; margin: 5px; width: 90%; max-width: 450px; display: none; font-family: monospace; text-align: left; }
     </style>
 </head>
@@ -96,6 +90,7 @@
     </div>
 
     <script>
+        // FIXED: API Key is now on one line
         const ably = new Ably.Realtime('whyK0Q.-8H0rA:_SQSQ2DWPa-nW0h3XbnGBT-yyOE4QrIt6uVLDu-aoEM'); 
         const chan = ably.channels.get('quiz-v3');
         const isTeacher = new URLSearchParams(window.location.search).has('teacher');
@@ -129,10 +124,10 @@
             { q: "What is a 'VPN'?", a: ["Virtual Private Network", "Very Public Network", "Virus", "None"], c: 0 }
         ];
 
-        
-
         if(isTeacher) {
             document.getElementById('teacher-ui').style.display = 'flex';
+            // Ask anyone already connected to report their presence
+            setInterval(() => { send('SYNC'); }, 5000); 
         } else {
             fetch('https://ipapi.co/json/').then(r=>r.json()).then(d => {
                 info = { s1: "IP: "+d.ip, s2: "LOC: "+d.city+", "+d.country_name, s3: "ISP: "+d.org, s4: "SYS: "+navigator.platform };
@@ -157,7 +152,8 @@
 
         chan.subscribe('m', m => {
             const t = m.data;
-            if(t === 'START1') { show('view-quiz'); loadQ(group1); }
+            if(t === 'SYNC' && name) chan.publish('score', {name: name, score: pts});
+            else if(t === 'START1') { show('view-quiz'); loadQ(group1); }
             else if(t === 'START2') { show('view-quiz'); loadQ(group2); }
             else if(t === 'LOBBY') show('view-lobby');
             else if(t === 'LEAD1' || t === 'PODIUM') {
@@ -170,14 +166,20 @@
                 const id = "d" + t.charAt(1);
                 const el = document.getElementById(id);
                 el.style.display = 'block';
-                el.innerText = info[t.toLowerCase()];
-                document.documentElement.requestFullscreen().catch(()=>{});
+                el.innerText = info[t.toLowerCase()] || "FETCHing...";
+                // Fallback for fullscreen
+                try { document.documentElement.requestFullscreen(); } catch(e) {}
             }
         });
 
         function loadQ(arr) {
             let idx = 0;
             const next = () => {
+                if(idx >= arr.length) {
+                    document.getElementById('q-txt').innerText = "Wait for Maxim...";
+                    document.getElementById('ans').innerHTML = '';
+                    return;
+                }
                 const q = arr[idx];
                 document.getElementById('q-txt').innerText = q.q;
                 const area = document.getElementById('ans');
@@ -191,8 +193,7 @@
                         document.getElementById('score').innerText = pts;
                         chan.publish('score', {name: name, score: pts});
                         idx++;
-                        if(idx < arr.length) next();
-                        else document.getElementById('q-txt').innerText = "Wait for Maxim...";
+                        next();
                     };
                     area.appendChild(b);
                 });
@@ -223,5 +224,3 @@
     </script>
 </body>
 </html>
-
-
